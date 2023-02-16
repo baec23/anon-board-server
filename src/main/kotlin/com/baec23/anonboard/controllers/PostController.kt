@@ -15,17 +15,13 @@ class PostController constructor(
     fun getAllPosts(): ResponseEntity<SseEmitter> {
         println("getAllPosts")
         val emitter = postService.registerSseEmitter()
-        return ResponseEntity.ok(emitter)
+        val responseEntity =  ResponseEntity.ok(emitter)
+        return responseEntity
     }
-
-//    @GetMapping("/{post-id}")
-//    suspend fun getChildPosts(@PathVariable("post-id") postId: String): ResponseEntity<List<Post>>{
-//
-//
-//    }
 
     @PostMapping
     fun createPost(@RequestBody createPostRequestForm: CreatePostRequestForm): ResponseEntity<Post>{
+        println("createPost called with userDisplayName: ${createPostRequestForm.userDisplayName} | message: ${createPostRequestForm.message} | parentId: ${createPostRequestForm.parentId}")
         val savedPost = postService.savePost(createPostRequestForm)
         println("createPost savedPostId: " + savedPost.id)
         return ResponseEntity.ok(savedPost)

@@ -5,6 +5,7 @@ import com.baec23.anonboard.model.Post
 import com.baec23.anonboard.repositories.PostRepository
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.io.IOException
 
 @Service
 class PostService constructor(
@@ -13,7 +14,14 @@ class PostService constructor(
     private val sseEmitters: MutableList<SseEmitter> = mutableListOf()
 
     fun registerSseEmitter(): SseEmitter {
-        val emitter = SseEmitter(0L)
+        val emitter = SseEmitter(600000L)   //10 minutes
+        emitter.onTimeout {
+            sseEmitters.remove(emitter)
+        }
+        emitter.onCompletion {
+            sseEmitters.remove(emitter)
+        }
+
         sseEmitters.add(emitter)
         val event = SseEmitter.event().data(postRepository.findAll())
         emitter.send(event)
@@ -21,14 +29,6 @@ class PostService constructor(
     }
 
     fun savePost(requestForm: CreatePostRequestForm): Post {
-        var nestingLevel = 0;
-        if(requestForm.parentId != null){
-            val result = postRepository.findById(requestForm.parentId)
-            if(result.isPresent){
-                val parentPost = result.get()
-                nestingLevel = parentPost.nestingLevel+1
-            }
-        }
 
         val toSave = Post(
             id = null,
@@ -37,12 +37,11 @@ class PostService constructor(
             createdTimestamp = System.currentTimeMillis(),
             parentId = requestForm.parentId,
             childIds = listOf(),
-            nestingLevel = nestingLevel
         )
         val savedPost = postRepository.save(toSave)
-        if(requestForm.parentId != null){
+        if (requestForm.parentId != null) {
             val result = postRepository.findById(requestForm.parentId)
-            if(result.isPresent){
+            if (result.isPresent) {
                 val parentPost = result.get()
                 val mutableChildIds = parentPost.childIds.toMutableList()
                 savedPost.id?.let { mutableChildIds.add(it) }
@@ -59,11 +58,12 @@ class PostService constructor(
         sseEmitters.forEach { emitter ->
             try {
                 emitter.send(event)
-            } catch (e: Exception) {
-                emitter.complete()
+            } catch (e: IOException) {
                 emittersToRemove.add(emitter)
             }
         }
-        sseEmitters.removeAll(emittersToRemove)
+        emittersToRemove.forEach{
+            it.complete()
+        }
     }
 }

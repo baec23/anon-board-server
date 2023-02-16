@@ -12,5 +12,4 @@ data class Post(
     val createdTimestamp: Long,
     val parentId: String?,
     val childIds: List<String>,
-    val nestingLevel: Int = 0,
 )
