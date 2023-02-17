@@ -35,6 +35,11 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    //coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 }
 
 tasks.withType<KotlinCompile> {
